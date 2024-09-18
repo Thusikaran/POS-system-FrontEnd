@@ -18,6 +18,7 @@ const Admin = () => {
     getCategoryData();
   }, []); 
 
+  // get category data
   const getCategoryData = () => {
     setLoading(true); 
     getAllcategory() 
@@ -31,6 +32,7 @@ const Admin = () => {
         });
 };
 
+// get product data
   function getAllProductData() {
     setLoading(true); 
     getAllproduct()
@@ -55,6 +57,7 @@ const Admin = () => {
   const [allCategory,setAllCategory]=useState([]);
   const navigate = useNavigate();
 
+  // Model handle
   const handleShow = (id, name) => {
     setDeleteId(id);
     setProduct(name);

@@ -3,24 +3,11 @@ import Paginator from '../common/Paginator';
 import './POS.css'
 import { MdDelete } from "react-icons/md";
 import { FaPlus } from "react-icons/fa";
-import {  Spinner } from 'react-bootstrap';  
-import { getAllcategory, getAllproduct } from '../../service/ProductService';
+import {  Spinner ,Modal,Button} from 'react-bootstrap';  
+import { getAllcategory, getAllproduct, getTotel } from '../../service/ProductService';
 
 const POS = () => {
-    // const arr = [
-    //     {id:1, ProductName: 'iPhone 11', Price: 200, Quantity: 20 },
-    //     {id:2, ProductName: 'iPhone 12', Price: 300, Quantity: 10 },
-    //     {id:3, ProductName: 'iPhone 13', Price: 400, Quantity: 5 },
-    //     {id:4, ProductName: 'iPhone 14', Price: 500, Quantity: 3 },
-    //     {id:5, ProductName: 'iPhone 15', Price: 600, Quantity: 2 },
-    //     {id:6, ProductName: 'iPhone 11', Price: 200, Quantity: 20 },
-    //     {id:7, ProductName: 'iPhone 12', Price: 300, Quantity: 10 },
-    //     {id:8, ProductName: 'iPhone 13', Price: 400, Quantity: 5 },
-    //     {id:9, ProductName: 'iPhone 14', Price: 500, Quantity: 3 },
-    //     {id:10, ProductName: 'iPhone 15', Price: 600, Quantity: 2 },
-    //   ];
-   
-   
+
     const [arr, setArr] = useState([]); 
     const [loading, setLoading] = useState(true); 
     const [originalArr, setOriginalArr] = useState([]);
@@ -31,6 +18,7 @@ const POS = () => {
     const [Cards, setCards] = useState([]);
     const [productCounts, setProductCounts] = useState({});
     const [allCategory,setAllCategory]=useState([]);
+    const [showModal, setShowModal] = useState(false);
   
     useEffect(() => {
       getAllProductData();
@@ -41,6 +29,7 @@ const POS = () => {
       }
     }, [arr,category]); 
   
+    // get category data
     const getCategoryData = () => {
       setLoading(true); 
       getAllcategory() 
@@ -54,6 +43,7 @@ const POS = () => {
           });
   };
   
+  //get product data
     function getAllProductData() {
       setLoading(true); 
       getAllproduct()
@@ -63,7 +53,7 @@ const POS = () => {
           {
             setArr(response.data.$values);
           } 
-          console.log(response.data.$values)
+          // console.log(response.data.$values)
         
           setLoading(false);
           
@@ -72,10 +62,11 @@ const POS = () => {
           console.log(error);
           setLoading(false); 
         });
-        console.log(arr)
+        // console.log(arr)
         setFilteredCards(arr) 
     }
 
+    //select bar to handle category
     const handleCategory = (e) => {
       const data = e.target.value;
       setCategory(data);
@@ -85,10 +76,39 @@ const POS = () => {
         const filteredData = originalArr.filter((product) => product.categoryId == data);
         setArr(filteredData);
       }
-      console.log(arr)
+      // console.log(arr)
   };
+
+  //open model
+  const handleShow = () => {
+    if(totalCash===0){
+      setShowModal(false);
+    }else{
+      const data = updatedArrWithCounts.map(({ productId, count }) => ({
+        productId,
+        Quantity: count 
+    }));
+    
+    getTotel(data).then((response) => {
+      console.log(response.data);
+           setShowModal(true);
+        })
+        .catch((error) => {
+        console.error(error);
+        });
+
+    }
+    
+  };
+
+  //close model
+  const handleClose = () => {
+    setShowModal(false);
+    setProductCounts({})
+  }
     
 // -------------------------------------------------------------
+//pagination part
   const handlePaginationClick = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -102,6 +122,7 @@ const POS = () => {
   const indexOfFirstCard = indexOfLastCard - CardsPerPage;
   const currentCards = filteredCards.slice(indexOfFirstCard, indexOfLastCard);
 
+  // add product quantity
   const handleAddClick = (data) => {
     setProductCounts((prevCounts) => {
         const currentCount = prevCounts[data.productId] || 0;
@@ -117,6 +138,8 @@ const POS = () => {
         return prevCounts;  
     });
 };
+
+//remove quantity product
 const handleRemove = (data) => {
     setProductCounts((prevCounts) => {
         const currentCount = prevCounts[data.productId] || 0;
@@ -131,8 +154,9 @@ const handleRemove = (data) => {
     });
 };
 
+// add count dataset
 const updatedArrWithCounts = originalArr.map((item) => {
-    const count = productCounts[item.productId] || 0;  // If there's no count, set it to 0
+    const count = productCounts[item.productId] || 0; 
     return {
       ...item,
       count
@@ -141,7 +165,7 @@ const updatedArrWithCounts = originalArr.map((item) => {
 
       
 
-
+//calculate total
   function totalPayment() {
     const total = updatedArrWithCounts.reduce((accumulator, data) => {
         return accumulator + (data.count * data.price);
@@ -177,12 +201,6 @@ const totalCash = totalPayment();
         </div>
         <div className='col-md-2'></div>
         <div className='col-md-4'>
-          <select className='form-select' aria-label='Default select example'>
-            <option selected>Select Price Range</option>
-            <option value='1'>One</option>
-            <option value='2'>Two</option>
-            <option value='3'>Three</option>
-          </select>
         </div>
       </div>
       <hr />
@@ -218,7 +236,7 @@ const totalCash = totalPayment();
                 />
             </div>
         </div>
-        <div className='col-md-3 border right-container p-3' style={{position:'relative'}}>
+        <div className='col-md-3 border right-container mt-4 p-3' style={{position:'relative'}}>
            <h5><center>Add card</center></h5> 
            <hr />
            <div className='row pt-2' style={{backgroundColor:'', height:'42vh',overflow:'auto'}}>
@@ -244,10 +262,24 @@ const totalCash = totalPayment();
               <p>Totel </p>
               <p>{totalCash}.00/-</p>     
              </div>
-           <button className='btn btn-primary ps-4 pe-4 mt-1' style={{float:'right'}}>Pay</button>
+           <button className='btn btn-primary ps-4 pe-4 mt-1'  onClick={() => handleShow()} style={{float:'right'}} >Pay</button>
         </div>
        
       </div>
+
+      {/* model content */}
+      <Modal show={showModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Payment Successful</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Your payment has been processed successfully.</Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={handleClose}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
     </div>
   );
 };
